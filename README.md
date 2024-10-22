@@ -3,7 +3,7 @@
 Userland FIFO file.
 
 ```
-npm install filefile
+npm install fifofile
 ```
 
 ## Usage
@@ -11,7 +11,7 @@ npm install filefile
 To consume, in any process
 
 ```js
-const FIFOFile = require('filefile')
+const FIFOFile = require('fifofile')
 
 for await (const msg of new FIFOFile('/tmp/my-fifo')) {
   console.log('incoming:', msg)
@@ -21,7 +21,7 @@ for await (const msg of new FIFOFile('/tmp/my-fifo')) {
 To produce, in any process
 
 ```js
-const FIFOFile = require('filefile')
+const FIFOFile = require('fifofile')
 
 const fifo = new FIFOFile('/tmp/my-fifo')
 
