@@ -31,6 +31,7 @@
     "streamx": "^2.20.1"
   },
   "devDependencies": {
+    "compact-encoding": "^2.15.0",
     "standard": "^17.1.2"
   }
 }

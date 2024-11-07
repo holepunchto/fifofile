@@ -5,8 +5,11 @@ const fsext = require('fs-native-extensions')
 const RANDOM_ACCESS_APPEND = fs.constants.O_RDWR | fs.constants.O_CREAT
 
 module.exports = class FIFOFile extends Duplex {
-  constructor (filename) {
-    super({ highWaterMark: 0, mapWritable })
+  constructor (filename, { valueEncoding } = {}) {
+    const mapWritable = valueEncoding ? createMapWritable(valueEncoding) : defaultMapWritable
+    const mapReadable = valueEncoding ? createMapReadable(valueEncoding) : null
+
+    super({ highWaterMark: 0, mapWritable, mapReadable })
 
     this.filename = filename
     this.fd = 0
@@ -196,6 +199,22 @@ function readMessages (fd, pos, cb) {
   }
 }
 
-function mapWritable (buf) {
+function defaultMapWritable (buf) {
   return typeof buf === 'string' ? Buffer.from(buf) : buf
+}
+
+function createMapWritable (valueEncoding) {
+  return function (data) {
+    const state = { start: 0, end: 0, buffer: null}
+    valueEncoding.preencode(state, data)
+    state.buffer = Buffer.allocUnsafe(state.end)
+    valueEncoding.encode(state, data)
+    return state.buffer
+  }
+}
+
+function createMapReadable (valueEncoding) {
+  return function (buffer) {
+    return valueEncoding.decode({ start: 0, end: buffer.byteLength, buffer })
+  }
 }

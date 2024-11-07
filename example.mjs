@@ -1,14 +1,15 @@
 import FIFOFile from './index.js'
+import c from 'compact-encoding'
 
 const argv = global.Bare ? global.Bare.argv : global.process.argv
-const fifo = new FIFOFile('/tmp/fifo')
+const fifo = new FIFOFile('/tmp/fifo', { valueEncoding: c.any })
 
 if (argv[2] === 'read') {
   fifo.on('data', function (data) {
-    console.log('got:', JSON.parse(data.toString()))
+    console.log('got:', data)
   })
 }
 
 if (argv[2] === 'write') {
-  fifo.end(Buffer.from(JSON.stringify({ hello: 'world', time: Date.now() })))
+  fifo.end({ hello: 'world', time: Date.now() })
 }
