@@ -205,7 +205,7 @@ function defaultMapWritable (buf) {
 
 function createMapWritable (valueEncoding) {
   return function (data) {
-    const state = { start: 0, end: 0, buffer: null}
+    const state = { start: 0, end: 0, buffer: null }
     valueEncoding.preencode(state, data)
     state.buffer = Buffer.allocUnsafe(state.end)
     valueEncoding.encode(state, data)
