@@ -43,7 +43,10 @@ module.exports = class FIFOFile extends Duplex {
     }
 
     this._locked = []
+    this._runLocked(cb)
+  }
 
+  _runLocked (cb) {
     const free = (cb, err) => {
       fsext.unlock(this.fd)
 
@@ -52,7 +55,7 @@ module.exports = class FIFOFile extends Duplex {
       } else if (this._locked.length === 0) {
         this._locked = null
       } else {
-        this._lock(this._locked.shift())
+        this._runLocked(this._locked.shift())
       }
 
       cb(err)
