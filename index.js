@@ -50,12 +50,14 @@ module.exports = class FIFOFile extends Duplex {
     const free = (cb, err) => {
       fsext.unlock(this.fd)
 
-      if (err) {
-        while (this._locked.length > 0) this._locked.pop()(err)
-      } else if (this._locked.length === 0) {
-        this._locked = null
-      } else {
-        this._runLocked(this._locked.shift())
+      if (this._locked !== null) {
+        if (err) {
+          while (this._locked.length > 0) this._locked.pop()(err)
+        } else if (this._locked.length === 0) {
+          this._locked = null
+        } else {
+          this._runLocked(this._locked.shift())
+        }
       }
 
       cb(err)
@@ -101,7 +103,7 @@ module.exports = class FIFOFile extends Duplex {
   _predestroy () {
     if (this._watcher) this._watcher.close()
     this._watcher = null
-    if (this._locked.length > 0) {
+    if (this._locked !== null && this._locked.length > 0) {
       while (this._locked.length > 0) this._locked.pop(new Error('Destroying'))
     }
   }
