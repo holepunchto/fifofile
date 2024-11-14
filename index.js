@@ -135,7 +135,7 @@ function writeMessages (fd, batch, cb) {
 
   len = 0
   for (const msg of batch) {
-    buf.writeUint32LE(msg.byteLength, len)
+    buf.writeUInt32LE(msg.byteLength, len)
     len += 4
     buf.set(msg, len)
     len += msg.byteLength
@@ -184,7 +184,7 @@ function readMessages (fd, pos, cb) {
     pos += read
 
     while (end - start >= 4) {
-      const size = buf.readUint32LE(start)
+      const size = buf.readUInt32LE(start)
       if (start + 4 + size > end) {
         while (start + 4 + size > buf.byteLength) {
           buf = Buffer.concat([buf, Buffer.allocUnsafe(buf.byteLength)])
