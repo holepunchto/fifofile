@@ -181,7 +181,6 @@ function readMessages (fd, pos, cb) {
     }
 
     end += read
-    pos += read
 
     while (end - start >= 4) {
       const size = buf.readUInt32LE(start)
