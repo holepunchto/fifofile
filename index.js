@@ -104,7 +104,7 @@ module.exports = class FIFOFile extends Duplex {
     if (this._watcher) this._watcher.close()
     this._watcher = null
     if (this._locked !== null && this._locked.length > 0) {
-      while (this._locked.length > 0) this._locked.pop(new Error('Destroying'))
+      while (this._locked.length > 0) this._locked.pop()(new Error('Destroying'))
     }
   }
 
