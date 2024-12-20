@@ -1,11 +1,12 @@
 const { Duplex } = require('streamx')
 const fs = require('fs')
+const { crc32 } = require('crc-universal')
 const fsext = require('fs-native-extensions')
 
 const RANDOM_ACCESS_APPEND = fs.constants.O_RDWR | fs.constants.O_CREAT
 
 module.exports = class FIFOFile extends Duplex {
-  constructor (filename, { valueEncoding } = {}) {
+  constructor (filename, { valueEncoding, maxSize = 16 * 1024 * 1024 } = {}) {
     const mapWritable = valueEncoding ? createMapWritable(valueEncoding) : defaultMapWritable
     const mapReadable = valueEncoding ? createMapReadable(valueEncoding) : null
 
@@ -13,6 +14,7 @@ module.exports = class FIFOFile extends Duplex {
 
     this.filename = filename
     this.fd = 0
+    this.maxSize = maxSize
 
     this._pos = 0
     this._watcher = null
@@ -84,7 +86,7 @@ module.exports = class FIFOFile extends Duplex {
     this._lock((err, free) => {
       if (err) return free(cb, err)
 
-      readMessages(this.fd, this._pos, (err, batch, pos) => {
+      readMessages(this.fd, this.maxSize, this._pos, (err, batch, pos) => {
         if (err) return free(cb, err)
 
         this._pos = pos
@@ -129,13 +131,15 @@ function writeMessages (fd, batch, cb) {
   let offset = 0
 
   let len = 0
-  for (const msg of batch) len += msg.byteLength + 4
+  for (const msg of batch) len += msg.byteLength + 4 + 4
 
   const buf = Buffer.allocUnsafe(len)
 
   len = 0
   for (const msg of batch) {
     buf.writeUInt32LE(msg.byteLength, len)
+    len += 4
+    buf.writeUInt32LE(crc32(msg), len)
     len += 4
     buf.set(msg, len)
     len += msg.byteLength
@@ -158,7 +162,7 @@ function writeMessages (fd, batch, cb) {
   })
 }
 
-function readMessages (fd, pos, cb) {
+function readMessages (fd, maxSize, pos, cb) {
   let start = 0
   let end = 0
   let buf = Buffer.allocUnsafe(65536)
@@ -182,18 +186,32 @@ function readMessages (fd, pos, cb) {
 
     end += read
 
-    while (end - start >= 4) {
+    while (end - start >= 8) {
       const size = buf.readUInt32LE(start)
-      if (start + 4 + size > end) {
-        while (start + 4 + size > buf.byteLength) {
+
+      if (size > maxSize) {
+        fs.ftruncate(fd, 0, ontruncate)
+        return
+      }
+
+      if (start + 8 + size > end) {
+        while (start + 8 + size > buf.byteLength) {
           buf = Buffer.concat([buf, Buffer.allocUnsafe(buf.byteLength)])
         }
         break
       }
 
       start += 4
+      const chk = buf.readUInt32LE(start)
+      start += 4
       const msg = buf.subarray(start, start + size)
       start += size
+
+      if (crc32(msg) !== chk) {
+        fs.ftruncate(fd, 0, ontruncate)
+        return
+      }
+
       batch.push(msg)
     }
 

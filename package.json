@@ -7,8 +7,13 @@
     "type": "git",
     "url": "https://github.com/holepunchto/fifofile.git"
   },
+  "files": [
+    "index.js"
+  ],
   "scripts": {
-    "test": "standard"
+    "test": "standard && npm run test:node",
+    "test:node": "node test.js",
+    "test:bare": "bare test.js"
   },
   "files": [
     "index.js"
@@ -17,6 +22,10 @@
     "fs": {
       "bare": "bare-fs",
       "default": "fs"
+    },
+    "path": {
+      "bare": "bare-path",
+      "default": "path"
     }
   },
   "author": "Holepunch Inc",
@@ -26,11 +35,13 @@
   },
   "homepage": "https://github.com/holepunchto/fifofile",
   "dependencies": {
-    "bare-fs": "^3.1.1",
+    "bare-fs": "^4.0.0",
+    "crc-universal": "^1.0.4",
     "fs-native-extensions": "^1.3.1",
     "streamx": "^2.20.1"
   },
   "devDependencies": {
+    "bare-path": "^3.0.0",
     "compact-encoding": "^2.15.0",
     "standard": "^17.1.2"
   }
