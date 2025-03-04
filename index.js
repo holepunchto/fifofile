@@ -54,7 +54,7 @@ module.exports = class FIFOFile extends Duplex {
 
       if (this._locked !== null) {
         if (err) {
-          while (this._locked.length > 0) this._locked.pop()(err)
+          while (this._locked.length > 0) this._locked.pop()(err, dummyFree)
         } else if (this._locked.length === 0) {
           this._locked = null
         } else {
@@ -67,7 +67,7 @@ module.exports = class FIFOFile extends Duplex {
 
     waitForLock(this.fd, (err) => {
       if (err) return cb(err, null)
-      if (this.destroying) return cb(new Error('Destroyed'))
+      if (this.destroying) return cb(new Error('Destroyed'), dummyFree)
       cb(null, free)
     })
   }
@@ -239,4 +239,8 @@ function createMapReadable (valueEncoding) {
   return function (buffer) {
     return valueEncoding.decode({ start: 0, end: buffer.byteLength, buffer })
   }
+}
+
+function dummyFree (cb, err) {
+  cb(err)
 }
