@@ -2,6 +2,7 @@ const { Duplex } = require('streamx')
 const fs = require('fs')
 const { crc32 } = require('crc-universal')
 const fsext = require('fs-native-extensions')
+const onexit = require('resource-on-exit')
 
 const RANDOM_ACCESS_APPEND = fs.constants.O_RDWR | fs.constants.O_CREAT
 
@@ -25,6 +26,7 @@ module.exports = class FIFOFile extends Duplex {
     fs.open(this.filename, RANDOM_ACCESS_APPEND, (err, fd) => {
       if (err) return cb(err)
       this.fd = fd
+      onexit.add(this, closeSync)
       cb(null)
     })
   }
@@ -116,6 +118,7 @@ module.exports = class FIFOFile extends Duplex {
       return
     }
 
+    onexit.remove(this, closeSync)
     fs.close(this.fd, () => {
       this.fd = 0
       cb(null)
@@ -243,4 +246,11 @@ function createMapReadable (valueEncoding) {
 
 function dummyFree (cb, err) {
   cb(err)
+}
+
+function closeSync (fifo) {
+  if (fifo.fd <= 0) return
+  const fd = fifo.fd
+  fifo.fd = 0
+  fs.closeSync(fd)
 }
