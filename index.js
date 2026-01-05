@@ -68,7 +68,7 @@ module.exports = class FIFOFile extends Duplex {
     }
 
     waitForLock(this.fd, (err) => {
-      if (err) return cb(err, null)
+      if (err) return cb(err, dummyFree)
       if (this.destroying) return cb(new Error('Destroyed'), dummyFree)
       cb(null, free)
     })
