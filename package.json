@@ -11,9 +11,9 @@
     "index.js"
   ],
   "scripts": {
-    "test": "standard && npm run test:node",
-    "test:node": "node test.js",
-    "test:bare": "bare test.js"
+    "format": "prettier . --write",
+    "test": "prettier . --check && lunte && brittle test.js && brittle-bare test.js",
+    "lint": "lunte"
   },
   "imports": {
     "fs": {
@@ -42,7 +42,9 @@
     "bare-path": "^3.0.0",
     "brittle": "^3.7.0",
     "compact-encoding": "^2.15.0",
-    "standard": "^17.1.2",
+    "lunte": "^1.4.0",
+    "prettier": "^3.7.4",
+    "prettier-config-holepunch": "^2.0.0",
     "test-tmp": "^1.3.1"
   }
 }

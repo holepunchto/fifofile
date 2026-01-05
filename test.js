@@ -16,7 +16,7 @@ test('basic', async function (t) {
   }
 
   f.end()
-  await new Promise(resolve => f.on('finish', resolve))
+  await new Promise((resolve) => f.on('finish', resolve))
   let recv = 0
   for await (const data of f) {
     if (!data.equals(Buffer.from('#' + recv++))) {
@@ -44,9 +44,9 @@ test('multiple write sessions', async function (t) {
     }
 
     f.end()
-    await new Promise(resolve => f.on('finish', resolve))
+    await new Promise((resolve) => f.on('finish', resolve))
     f.destroy()
-    await new Promise(resolve => f.on('close', resolve))
+    await new Promise((resolve) => f.on('close', resolve))
   }
 
   const f = new FF(path.join(dir, 'fifo'))
@@ -74,9 +74,9 @@ test('messages over the limit are ignored', async function (t) {
   }
 
   f.end()
-  await new Promise(resolve => f.on('finish', resolve))
+  await new Promise((resolve) => f.on('finish', resolve))
   f.destroy()
-  await new Promise(resolve => f.on('close', resolve))
+  await new Promise((resolve) => f.on('close', resolve))
 
   const f2 = new FF(path.join(dir, 'fifo'), { maxSize: 4 })
 
@@ -108,9 +108,9 @@ test('messages are checksummed', async function (t) {
   f.write(Buffer.from('b'))
   f.end()
 
-  await new Promise(resolve => f.on('finish', resolve))
+  await new Promise((resolve) => f.on('finish', resolve))
   f.destroy()
-  await new Promise(resolve => f.on('close', resolve))
+  await new Promise((resolve) => f.on('close', resolve))
 
   const buf = await fs.promises.readFile(path.join(dir, 'fifo'))
   buf[buf.length - 1]++

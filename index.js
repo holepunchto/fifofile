@@ -7,7 +7,7 @@ const onexit = require('resource-on-exit')
 const RANDOM_ACCESS_APPEND = fs.constants.O_RDWR | fs.constants.O_CREAT
 
 module.exports = class FIFOFile extends Duplex {
-  constructor (filename, { valueEncoding, maxSize = 16 * 1024 * 1024 } = {}) {
+  constructor(filename, { valueEncoding, maxSize = 16 * 1024 * 1024 } = {}) {
     const mapWritable = valueEncoding ? createMapWritable(valueEncoding) : defaultMapWritable
     const mapReadable = valueEncoding ? createMapReadable(valueEncoding) : null
 
@@ -22,7 +22,7 @@ module.exports = class FIFOFile extends Duplex {
     this._locked = null
   }
 
-  _open (cb) {
+  _open(cb) {
     fs.open(this.filename, RANDOM_ACCESS_APPEND, (err, fd) => {
       if (err) return cb(err)
       this.fd = fd
@@ -31,7 +31,7 @@ module.exports = class FIFOFile extends Duplex {
     })
   }
 
-  _writev (batch, cb) {
+  _writev(batch, cb) {
     this._lock((err, free) => {
       if (err) return free(cb, err)
       writeMessages(this.fd, batch, (err) => {
@@ -40,7 +40,7 @@ module.exports = class FIFOFile extends Duplex {
     })
   }
 
-  _lock (cb) {
+  _lock(cb) {
     if (this._locked !== null) {
       this._locked.push(cb)
       return
@@ -50,7 +50,7 @@ module.exports = class FIFOFile extends Duplex {
     this._runLocked(cb)
   }
 
-  _runLocked (cb) {
+  _runLocked(cb) {
     const free = (cb, err) => {
       fsext.unlock(this.fd)
 
@@ -74,7 +74,7 @@ module.exports = class FIFOFile extends Duplex {
     })
   }
 
-  _waitAndRead () {
+  _waitAndRead() {
     this._watcher = fs.watch(this.filename, () => {
       this._watcher.close()
       this._watcher = null
@@ -84,7 +84,7 @@ module.exports = class FIFOFile extends Duplex {
     })
   }
 
-  _read (cb) {
+  _read(cb) {
     this._lock((err, free) => {
       if (err) return free(cb, err)
 
@@ -104,7 +104,7 @@ module.exports = class FIFOFile extends Duplex {
     })
   }
 
-  _predestroy () {
+  _predestroy() {
     if (this._watcher) this._watcher.close()
     this._watcher = null
     if (this._locked !== null && this._locked.length > 0) {
@@ -112,7 +112,7 @@ module.exports = class FIFOFile extends Duplex {
     }
   }
 
-  _destroy (cb) {
+  _destroy(cb) {
     if (this.fd === 0) {
       cb(null)
       return
@@ -126,11 +126,11 @@ module.exports = class FIFOFile extends Duplex {
   }
 }
 
-function waitForLock (fd, cb) {
+function waitForLock(fd, cb) {
   fsext.waitForLock(fd).then(cb, cb)
 }
 
-function writeMessages (fd, batch, cb) {
+function writeMessages(fd, batch, cb) {
   let offset = 0
 
   let len = 0
@@ -154,7 +154,7 @@ function writeMessages (fd, batch, cb) {
     let pos = st.size
     fs.write(fd, buf, 0, buf.byteLength, pos, loop)
 
-    function loop (err, wrote) {
+    function loop(err, wrote) {
       if (err) return cb(err)
       if (wrote === 0) return cb(null)
       offset += wrote
@@ -165,7 +165,7 @@ function writeMessages (fd, batch, cb) {
   })
 }
 
-function readMessages (fd, maxSize, pos, cb) {
+function readMessages(fd, maxSize, pos, cb) {
   let start = 0
   let end = 0
   let buf = Buffer.allocUnsafe(65536)
@@ -174,12 +174,12 @@ function readMessages (fd, maxSize, pos, cb) {
 
   fs.read(fd, buf, 0, buf.byteLength, pos, loop)
 
-  function ontruncate (err) {
+  function ontruncate(err) {
     if (err) return cb(err)
     cb(null, batch, 0)
   }
 
-  function loop (err, read) {
+  function loop(err, read) {
     if (err) return cb(err)
 
     if (read === 0) {
@@ -224,11 +224,11 @@ function readMessages (fd, maxSize, pos, cb) {
   }
 }
 
-function defaultMapWritable (buf) {
+function defaultMapWritable(buf) {
   return typeof buf === 'string' ? Buffer.from(buf) : buf
 }
 
-function createMapWritable (valueEncoding) {
+function createMapWritable(valueEncoding) {
   return function (data) {
     const state = { start: 0, end: 0, buffer: null }
     valueEncoding.preencode(state, data)
@@ -238,17 +238,17 @@ function createMapWritable (valueEncoding) {
   }
 }
 
-function createMapReadable (valueEncoding) {
+function createMapReadable(valueEncoding) {
   return function (buffer) {
     return valueEncoding.decode({ start: 0, end: buffer.byteLength, buffer })
   }
 }
 
-function dummyFree (cb, err) {
+function dummyFree(cb, err) {
   cb(err)
 }
 
-function closeSync (fifo) {
+function closeSync(fifo) {
   if (fifo.fd <= 0) return
   const fd = fifo.fd
   fifo.fd = 0
