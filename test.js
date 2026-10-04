@@ -136,3 +136,30 @@ test('messages are checksummed', async function (t) {
   t.is(recv, 1)
   t.is(last.toString(), 'a')
 })
+
+test('destroy while a watcher-triggered read is in flight', async function (t) {
+  const dir = await tmp(t)
+
+  // a consumer drained the file, so the next write wakes the fs.watch read;
+  // destroying right after that write races the read's own fs calls. The
+  // delays and the two destroy shapes (immediate, and after end() finished
+  // like a queue closing) cover the timing on both runtimes
+  for (let i = 0; i < 300; i++) {
+    const f = new FF(path.join(dir, 'fifo-' + i))
+    f.on('readable', () => {
+      let msg = f.read()
+      while (msg !== null) msg = f.read()
+    })
+    f.write(Buffer.from('one'))
+    await new Promise((resolve) => setTimeout(resolve, 3))
+    f.write(Buffer.from('two'))
+    if (i % 3 === 0) await new Promise((resolve) => setImmediate(resolve))
+    else await new Promise((resolve) => setTimeout(resolve, i % 3))
+    f.end()
+    if (i % 2 === 0) await new Promise((resolve) => f.once('finish', resolve))
+    f.destroy()
+    await new Promise((resolve) => f.once('close', resolve))
+  }
+
+  t.pass('destroy never threw')
+})

@@ -52,7 +52,7 @@ module.exports = class FIFOFile extends Duplex {
 
   _runLocked(cb) {
     const free = (cb, err) => {
-      fsext.unlock(this.fd)
+      if (!this.destroying) fsext.unlock(this.fd)
 
       if (this._locked !== null) {
         if (err) {
@@ -75,9 +75,11 @@ module.exports = class FIFOFile extends Duplex {
   }
 
   _waitAndRead() {
+    if (this.destroying) return
     this._watcher = fs.watch(this.filename, () => {
       this._watcher.close()
       this._watcher = null
+      if (this.destroying) return
       this._read((err) => {
         if (err) this.destroy(err)
       })
@@ -108,7 +110,7 @@ module.exports = class FIFOFile extends Duplex {
     if (this._watcher) this._watcher.close()
     this._watcher = null
     if (this._locked !== null && this._locked.length > 0) {
-      while (this._locked.length > 0) this._locked.pop()(new Error('Destroying'))
+      while (this._locked.length > 0) this._locked.pop()(new Error('Destroying'), dummyFree)
     }
   }
 
